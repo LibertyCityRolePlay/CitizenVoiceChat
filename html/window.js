@@ -258,6 +258,151 @@ function ConnectTo(playerid, playername)
 
 }
 
+window.addEventListener('message', function(event)
+{
+    var item = event.data;
+    
+    if (item.meta && item.meta == 'setstatusvoiceradio')
+    { 
+      
+        if(item.volume == 1)
+        {
+
+          Messageslogs("+#voiceui_"+item.player);
+          document.getElementById('voicer_'+item.player).play();
+          $("#voiceui_"+item.player).show();
+          Messageslogs("++#voiceui_"+item.player);
+          
+        }
+        else
+        {
+          Messageslogs("-#voiceui_"+item.player);
+          document.getElementById('voicer_'+item.player).pause();
+          $("#voiceui_"+item.player).hide();
+          Messageslogs("--#voiceui_"+item.player);
+        }
+        
+        return;
+    }
+    if (item.meta && item.meta == 'setstatusvoice')
+    { 
+      var tempplayer = document.getElementById('voicer_'+item.player);
+      if(tempplayer != null)
+      {
+        Messageslogs("ChangeVolume");
+        if(item.volume === 1)
+        {
+          if(voicedata[item.player] <= 0.1)
+          {
+            document.getElementById('voicer_'+item.player).pause();
+            $("#voiceui_"+item.player).hide();
+          }
+          else
+          {
+            Messageslogs("Pla");
+            document.getElementById('voicer_'+item.player).play();
+            $("#voiceui_"+item.player).show();
+          }
+        }
+        else
+        {
+          document.getElementById('voicer_'+item.player).pause();
+          $("#voiceui_"+item.player).hide();
+        }
+      }
+      
+        
+        return;
+    }
+    if (item.meta && item.meta == 'deletevoiceuser')
+    { 
+      document.getElementById('voicer_'+item.player).remove();
+        
+        return;
+    }
+    if (item.meta && item.meta == 'adduser')
+    { 
+      if(document.getElementById('voicer_'+item.db) == null)
+      {
+        Messageslogs("2 - Connect to " + item.name);
+
+        ConnectTo(item.db, item.name);
+      }
+        
+        return;
+    }
+    if (item.meta && item.meta == 'voiceonr')
+    { 
+
+            var img = document.getElementById("micro"); 
+            img.src = 'onr.png'; 
+
+        
+        
+        return;
+    }
+
+    if (item.meta && item.meta == 'voiceon')
+    { 
+        if(verr == false)
+        {
+            var img = document.getElementById("micro"); 
+            img.src = 'on.png'; 
+        }
+        
+        
+        return;
+    }
+    if (item.meta && item.meta == 'setvolumeplayer')
+    { 
+      var tempplayer = document.getElementById('voicer_'+item.player);
+      if(tempplayer != null)
+      {
+        if(item.volume == -1)
+        {
+          tempplayer.volume = 0.0;
+        }
+        else
+        {
+          tempplayer.volume = ((100 - (item.volume*100/30))/100);
+        }
+        
+      } 
+
+        return;
+    }
+
+    if (item.meta && item.meta == 'voiceoff')
+    { 
+        if(verr == false)
+        {
+            var img = document.getElementById("micro"); 
+            img.src = 'off.png'; 
+        }
+        
+        
+        return;
+    }
+
+    if (item.meta && item.meta == 'activeloginmicro')
+    { 
+      $('#loginmincto').show();
+      return;
+    }
+
+    if (item.meta && item.meta == 'getmyids')
+    { 
+        myid = item.smyid;
+        securyid = item.secure;
+        Messageslogs("pID: "+myid);
+        Messageslogs("Encryption key gKey: "+securyid);
+        StartPeer();
+        StartLocalVoice();
+        return;
+    }
+    
+}, false);
+
 function refetchData()
 {
     getLock = 0;
@@ -275,144 +420,7 @@ function refetchData()
 
         data.forEach(function(item)
         {
-            if (item.meta && item.meta == 'setstatusvoiceradio')
-            { 
-              
-                if(item.volume == 1)
-                {
-
-                  Messageslogs("+#voiceui_"+item.player);
-                  document.getElementById('voicer_'+item.player).play();
-                  $("#voiceui_"+item.player).show();
-                  Messageslogs("++#voiceui_"+item.player);
-                  
-                }
-                else
-                {
-                  Messageslogs("-#voiceui_"+item.player);
-                  document.getElementById('voicer_'+item.player).pause();
-                  $("#voiceui_"+item.player).hide();
-                  Messageslogs("--#voiceui_"+item.player);
-                }
-                
-                return;
-            }
-            if (item.meta && item.meta == 'setstatusvoice')
-            { 
-              var tempplayer = document.getElementById('voicer_'+item.player);
-              if(tempplayer != null)
-              {
-                Messageslogs("ChangeVolume");
-                if(item.volume === 1)
-                {
-                  if(voicedata[item.player] <= 0.1)
-                  {
-                    document.getElementById('voicer_'+item.player).pause();
-                    $("#voiceui_"+item.player).hide();
-                  }
-                  else
-                  {
-                    Messageslogs("Pla");
-                    document.getElementById('voicer_'+item.player).play();
-                    $("#voiceui_"+item.player).show();
-                  }
-                }
-                else
-                {
-                  document.getElementById('voicer_'+item.player).pause();
-                  $("#voiceui_"+item.player).hide();
-                }
-              }
-              
-                
-                return;
-            }
-            if (item.meta && item.meta == 'deletevoiceuser')
-            { 
-              document.getElementById('voicer_'+item.player).remove();
-                
-                return;
-            }
-            if (item.meta && item.meta == 'adduser')
-            { 
-              if(document.getElementById('voicer_'+item.db) == null)
-              {
-                Messageslogs("2 - Connect to " + item.name);
-
-                ConnectTo(item.db, item.name);
-              }
-                
-                return;
-            }
-            if (item.meta && item.meta == 'voiceonr')
-            { 
-
-                    var img = document.getElementById("micro"); 
-                    img.src = 'onr.png'; 
-      
-                
-                
-                return;
-            }
             
-            if (item.meta && item.meta == 'voiceon')
-            { 
-                if(verr == false)
-                {
-                    var img = document.getElementById("micro"); 
-                    img.src = 'on.png'; 
-                }
-                
-                
-                return;
-            }
-            if (item.meta && item.meta == 'setvolumeplayer')
-            { 
-              var tempplayer = document.getElementById('voicer_'+item.player);
-              if(tempplayer != null)
-              {
-                if(item.volume == -1)
-                {
-                  tempplayer.volume = 0.0;
-                }
-                else
-                {
-                  tempplayer.volume = ((100 - (item.volume*100/30))/100);
-                }
-                
-              } 
- 
-                return;
-            }
-            
-            if (item.meta && item.meta == 'voiceoff')
-            { 
-                if(verr == false)
-                {
-                    var img = document.getElementById("micro"); 
-                    img.src = 'off.png'; 
-                }
-                
-                
-                return;
-            }
-
-            if (item.meta && item.meta == 'activeloginmicro')
-            { 
-              $('#loginmincto').show();
-              return;
-            }
-
-            if (item.meta && item.meta == 'getmyids')
-            { 
-                myid = item.smyid;
-                securyid = item.secure;
-                Messageslogs("pID: "+myid);
-                Messageslogs("Encryption key gKey: "+securyid);
-                StartPeer();
-                StartLocalVoice();
-                return;
-            }
             
         });
     });
