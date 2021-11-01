@@ -1,4 +1,4 @@
-local sec = ""
+local securyKey = nil
 function randomstring(length)
     local chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
     local randomString = ''
@@ -17,38 +17,32 @@ function randomstring(length)
     return randomString
 end
 
-RegisterServerEvent("GetMeMyIdNow")
-AddEventHandler('GetMeMyIdNow', function()
-    if sec == "" then
-        sec = randomstring(10)
-        print("Genereted Voice Secure ID: "..sec)
+AddEventHandler('playerActivated', function()
+	if securyKey == nil then
+        securyKey = randomstring(10)
     end
-    local kokos = source
-    TriggerClientEvent('ResultYouId', kokos, kokos, sec)
-    print('SendIDs = '..kokos)
-    
+    TriggerClientEvent('CheckPlayer', source, source, securyKey)
+	
 end)
 
-
-RegisterServerEvent('PlsChangeMyVoice')
-AddEventHandler('PlsChangeMyVoice', function(status)
-
-    TriggerClientEvent('SetValueByPlayerVoice', -1, source, status)
+RegisterServerEvent('ConnectToPlayer')
+AddEventHandler('ConnectToPlayer', function(pId, pName)
 
 end)
 
-AddEventHandler('playerDropped', function(reason)
-    TriggerClientEvent('DeletePlayerVoiceChat', -1, source)
+RegisterServerEvent('ConnectToMeAccept')
+AddEventHandler('ConnectToMeAccept', function(data)
+    TriggerClientEvent('ResultConnectToMeAccept', -1, data)
 end)
 
-RegisterServerEvent('PlsChangeMyVoiceByRadio')
-AddEventHandler('PlsChangeMyVoiceByRadio', function(status, channel)
-
-    TriggerClientEvent('SetValueByPlayerVoiceRadio', -1, source, status, channel)
-
+RegisterServerEvent('VOICE_L')
+AddEventHandler('VOICE_L', function(pId, keyStatus)
+    print('VOICE_L '.. pId .. " " .. keyStatus)
+    TriggerClientEvent('ResultVOICE_L', -1, pId, keyStatus)
 end)
 
-RegisterServerEvent('PlsAddMeToVoiceChat')
-AddEventHandler('PlsAddMeToVoiceChat', function(toplayerid, playerid, anem)
-    TriggerClientEvent('ResultPlsAddMeToVoiceChat', toplayerid, playerid, anem)
+RegisterServerEvent('VOICE_R')
+AddEventHandler('VOICE_R', function(pId, keyStatus)
+    print('VOICE_R '.. pId .. " " .. keyStatus)
+    --TriggerClientEvent('ResultVOICE_L', -1, pId, keyStatus)
 end)

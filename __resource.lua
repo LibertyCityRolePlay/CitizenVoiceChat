@@ -5,11 +5,15 @@ files {
     'html/off.png',
     'html/on.png',
     'html/onr.png',
-    'html/window.js',
+    'html/voice.js',
     'html/index.html'
 }
 
-export 'StartLoadingVoice'
-
-client_script 'client.lua' 
+client_script 'client.lua'
+client_script 'settings.lua'
+server_script 'settings.lua'
 server_script 'server.lua' 
+
+
+export 'SetPlayerChannel'
+export 'SetPlayerVolume'

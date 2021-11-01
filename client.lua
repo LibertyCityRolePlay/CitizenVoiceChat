@@ -1,292 +1,197 @@
-local uiBuffer = {}
-local myid = -1
-local sec = ""
-local radioChannel = 1
-
-local voiceactive = false
 AddEventHandlerNew = function(name, func)
     RegisterNetEvent(name)
     AddEventHandler(name, func)
 end
-AddEventHandlerNew('ResultYouId', function(ids, secu)
-    Citizen.CreateThread(function()
-        if ids == -1 then
-            Citizen.Wait(2000)
-            TriggerServerEvent('GetMeMyIdNow')
-        
-        end
-        sec = secu
-        myid = ids
-    end)
-    
-end)
-RegisterNUICallback('getstatus', function(data, cb)
-    local localBuf = uiBuffer
-    uiBuffer = {}
 
-    cb(localBuf)
-end)
-AddEventHandlerNew('ChangeMyRadioChannel', function(idchannel)
-    radioChannel = idchannel
-end)
-local startvoice = 0
-local voiceschatplayers = { }
-local mynames = ""
-function StartLoadingVoice() 
-        local players = GetPlayers()
-        for _, player in ipairs(players) do
-            if GetPlayerServerId(player) ~= myid then
-                if voiceschatplayers[GetPlayerServerId(player)] == nil then
-                    Citizen.Wait(1500)
-                    SendNUIMessage({
-                        meta = 'adduser',
-                        db = GetPlayerServerId(player),
-                        myid = myid,
-                        name = GetPlayerName(player)
-                    })
-                    
-                    TriggerServerEvent('PlsAddMeToVoiceChat', GetPlayerServerId(player), myid, GetPlayerName(GetPlayerId()))
-                    voiceschatplayers[GetPlayerServerId(player)] = 1
+local useLocalData = { }
+useLocalData.player = { }
+useLocalData.player.status = false
+useLocalData.list = { }
+useLocalData.keyDown = false
+
+AddEventHandlerNew('CheckPlayer', function(pID, securyKey)
+    Citizen.CreateThread(function()
+        local rStatus = -1
+        while true do
+            Citizen.Wait(0)
+            for i = 0, 31 do
+                if IsNetworkPlayerActive(i) then
+                    if(ConvertIntToPlayerindex(i) == ConvertIntToPlayerindex(GetPlayerId())) then
+                        rStatus = i
+                    end
                 end
-            
             end
-        end
-        
-end
-RegisterNUICallback('goodload', function(data, cb)
-    TriggerServerEvent('GetMeMyIdNow')
-    Citizen.CreateThread(function()
-        while true do
-            if myid > 0 and sec ~= "" then
-                SendNUIMessage({
-                    meta = 'getmyids',
-                    smyid = myid, 
-                    secure = sec
-                })
-                
-                startvoice = 1
-                break
-            end
-            Citizen.Wait(1000)
-        end
-    end)
-    cb('ok')
-end)
 
-RegisterNUICallback('SendMessageCust', function(data, cb)
-   
-    Citizen.Trace("\nVOICE: ".. data.msgactig.."\n")
-    TriggerEvent('AddConsoleCommand', "Voice Chat",data.msgactig)
-    --cb('ok')
-end)
-
-AddEventHandlerNew('NewPlayerConnectToVoice', function(playerid, name)
-    
-    Citizen.CreateThread(function()
-        while true do
-            if myid > 0 then
-                if myid ~= playerid then
-                    SendNUIMessage({
-                        meta = 'adduser',
-                        db = playerid,
-                        myid = myid,
-                        name = name
-                    })
-                    
-                    --PollUI()
-
-                    
-                    break
-                
-                end
-                
-            end
-            Citizen.Wait(100)
-        end
-        while true do
-            Citizen.Wait(100)
-            local numwait = tonumber(GetPlayerId())
-            if numwait then
-                Citizen.Wait(numwait*100)
-                TriggerServerEvent('PlsAddMeToVoiceChat', playerid, numwait)
+            if rStatus ~= -1 then
                 break
             end
         end
+        SendNUIMessage({
+            pack = "START",
+            sKey = securyKey,
+            pName = GetPlayerName(),
+            pId = rStatus
+    
+        })
     end)
     
 end)
 
-AddEventHandlerNew('ResultPlsAddMeToVoiceChat', function(playerid, name)
-    if voiceschatplayers[playerid] == nil then
-        SendNUIMessage({
-            meta = 'adduser',
-            db = playerid,
-            myid = myid,
-            name = name
-        })
-        
-        voiceschatplayers[playerid] = 1
-    end
-        
-end)
 
-function IsPlayerNearCoords(x, y, z, radius)
-    local pos = table.pack(GetCharCoordinates(GetPlayerChar(-1)))
-    local dist = GetDistanceBetweenCoords3d(x, y, z, pos[1], pos[2], pos[3]-1.1);
-	if dist < radius then 
-		return true
-	else 
-		return false
+
+function SetPlayerChannel(pChannel) 
+    if pChannel >= 0 and pChannel < getSettings.limitRadioVoiceChat then
+        SendNUIMessage({
+            pack = "START_FUNCTION",
+            func = "SetPlayerChannel",
+            args = { 
+                [1] = pChannel 
+            }
+        })
+        return true
+    else
+        return false
     end
 end
 
-AddEventHandlerNew('DeletePlayerVoiceChat', function(playerid)
-    SendNUIMessage({
-        meta = 'deletevoiceuser',
-        player = playerid
-    })
-    
-end)
-local playervoices = { }
-local playersonclipsaoduo = {
-
-}
-AddEventHandlerNew('SetValueByPlayerVoiceRadio', function(playerid, status, channel)
-    if radioChannel == channel then
+function SetPlayerVolume(pId, pVolume) 
+    if pVolume >= 0.0 and pVolume < 1.0 then
         SendNUIMessage({
-            meta = 'setstatusvoiceradio',
-            player = playerid,
-            volume = status
+            pack = "START_FUNCTION",
+            func = "SetPlayerVolume",
+            args = { 
+                [1] = pId,
+                [2] = pVolume 
+            }
         })
-        
-        if status == 1 then
-            playersonclipsaoduo[playerid] = 1
-        else
-            playersonclipsaoduo[playerid] = nil
-        end
+        return true
+    else
+        return false
     end
+end
 
-end)
-AddEventHandlerNew('ActivateIconMicro', function()
-    
-    SendNUIMessage({
-        meta = 'activeloginmicro'
-    })
-    
-end)
-local playerspeding = {
 
-}
-AddEventHandlerNew('AddNewUserVoiceChat', function(playerid)
-    playerspeding[playerid] = 1
+RegisterNUICallback('StartSearchPlayers', function(data, cb)
+    cb('!')
+    Citizen.Trace("\n[Main Voice] StartSearchPlayers")
+    useLocalData.player = data
+    useLocalData.player.status = true
+    TriggerServerEvent('ConnectToMeAccept', data)
 end)
-AddEventHandlerNew('SetValueByPlayerVoice', function(playerid, status)
-    
-        SendNUIMessage({
-            meta = 'setstatusvoice',
-            player = playerid,
-            volume = status
-        })
+
+AddEventHandlerNew('ResultConnectToMeAccept', function(data)
+    --[[Citizen.Trace("\n[Main Voice]  ` 'ResultConnectToMeAccept'")
+    if data.pId ~= useLocalData.player.pId then
+        Citizen.Trace("\n[Main Voice] if data.pId ~= useLocalData.player.pId then")
+        if useLocalData["list"][data.pId] == nil then
+            useLocalData["list"][data.pId] = { }
+        end
+        useLocalData["list"][data.pId].lastuse = 15
+        useLocalData["list"][data.pId].pName = data.pName
+        useLocalData["list"][data.pId].pId = data.pId
+    end]]
+end)
+
+RegisterNUICallback('PlayerConnectedToVoice', function(data, cb)
+    cb('a')
+    useLocalData["list"][data.pId].lastuse = -1
+    --TriggerServerEvent('ConnectToPlayer', useLocalData["list"][data.pId].pId, useLocalData["list"][data.pId].pName)
 end)
 Citizen.CreateThread(function()
     while true do
-        Citizen.Wait(1)
-        if startvoice == 1 then
-            Citizen.Wait(5000)
-            StartLoadingVoice()
-        end
-    end
-end)
-local volumsplayer = { }
-Citizen.CreateThread(function()
-    while true do
-       Citizen.Wait(1)
-       local players = GetPlayers()
-        for _, player in ipairs(players) do
-            
-            if GetPlayerServerId(player) ~= myid then
-                if playerspeding[GetPlayerServerId(player)] then
-                    if playersonclipsaoduo[GetPlayerServerId(player)] then
-                        local pos = table.pack(GetCharCoordinates(GetPlayerChar(player)))
-                        local posx = table.pack(GetCharCoordinates(GetPlayerChar(-1)))
-                        local ns = GetDistanceBetweenCoords3d(pos[1], pos[2], pos[3]-1.1, posx[1], posx[2], posx[3]-1.1);
-      
-                        if volumsplayer[GetPlayerServerId(player)] == nil then
-                            volumsplayer[GetPlayerServerId(player)] = ns
+        Citizen.Wait(1000)
+        if useLocalData.player.status == true then
+            for i = 0, 31 do
+                if IsNetworkPlayerActive(i) then
+                    if(ConvertIntToPlayerindex(i) ~= ConvertIntToPlayerindex(GetPlayerId())) then
+                        if useLocalData["list"][i] == nil then
+                            useLocalData["list"][i] = { }
+                            useLocalData["list"][i].lastuse = 15
+                            useLocalData["list"][i].pName = GetPlayerName(i)
+                            useLocalData["list"][i].pId = i
                         else
-                            if ns < 40 then
-
-                                if volumsplayer[GetPlayerServerId(player)] ~= ns then
-                                
+                            if useLocalData["list"][i].pName ~= GetPlayerName(i) then
+                                useLocalData["list"][i] = { }
+                                useLocalData["list"][i].lastuse = 15
+                                useLocalData["list"][i].pName = GetPlayerName(i)
+                                useLocalData["list"][i].pId = i
+                                SendNUIMessage({
+                                    pack = "DISCONNECT",
+                                    pId = useLocalData["list"][i].pId
+                                })
+                            else
+                                if useLocalData["list"][i].lastuse == 15 then
+                                    useLocalData["list"][i].lastuse = 14
                                     SendNUIMessage({
-                                        meta = 'setvolumeplayer',
-                                        player = GetPlayerServerId(player),
-                                        volume = ns
+                                        pack = "CONNECT",
+                                        pId = useLocalData["list"][i].pId,
+                                        pName = GetPlayerName(i)
                                     })
+                                elseif useLocalData["list"][i].lastuse > 0 then
+                                    useLocalData["list"][i].lastuse = useLocalData["list"][i].lastuse - 1
+                                elseif useLocalData["list"][i].lastuse == 0 then
+                                    useLocalData["list"][i].lastuse = 15
+                                elseif useLocalData["list"][i].lastuse == -1 then
                                     
-                                    Citizen.Wait(5000)
                                 end
                             end
+                            
                         end
                     end
-                
+                else
+                    if useLocalData["list"][i] ~= nil then
+                        SendNUIMessage({ pack = "DISCONNECT", pId = useLocalData["list"][i].pId })
+                        useLocalData["list"][i] = nil
+                    end
                 end
-                
-                
+            end 
+        end
+    end
+end)
+
+AddEventHandlerNew('ResultVOICE_L', function(pId, keyStatus)
+    if useLocalData.player.pId ~= pId then
+        SendNUIMessage({ pack = "CHANGE_PLAYER_VOICE", set = keyStatus, pId = pId })
+    end
+end)
+
+Citizen.CreateThread(function()
+    local keyblock = 0 
+    local keyradio = 0 
+    while true do
+        Citizen.Wait(1)
+        if IsGameKeyboardKeyPressed(50) then
+            if keyblock == 0 then
+                if keyradio == 1 then
+                    keyradio = 0
+                    SendNUIMessage({ pack = "VOICE_R", set = keyradio })
+                    TriggerServerEvent('VOICE_R', useLocalData.player.pId, keyradio)
+                end
+
+                keyblock = 1
+                SendNUIMessage({ pack = "VOICE_L", set = keyblock })
+                TriggerServerEvent('VOICE_L', useLocalData.player.pId, keyblock)
+            end
+        else 
+            if keyblock == 1 then
+                keyblock = 0
+                SendNUIMessage({ pack = "VOICE_L", set = keyblock })
+                TriggerServerEvent('VOICE_L', useLocalData.player.pId, keyblock)
             end
         end
-        
-    end
 
-end)
-local chatst = 0
-local chatstnewl = 0
-Citizen.CreateThread(function()
-    while true do
-       Citizen.Wait(1)
         if IsGameKeyboardKeyPressed(49) then
-            if chatstnewl == 0 and chatst == 0 then
-                chatstnewl = 1
-                TriggerServerEvent('PlsChangeMyVoiceByRadio', 1, radioChannel)
-                voiceactive = true
-                SendNUIMessage({
-                    meta = 'voiceonr'
-                })
-                
+            if keyradio == 0 and keyblock == 0 then
+                keyradio = 1
+                SendNUIMessage({ pack = "VOICE_R", set = keyradio })
+                TriggerServerEvent('VOICE_R', useLocalData.player.pId, keyradio)
             end
-        else
-            if chatstnewl == 1 then
-                chatstnewl = 0
-                TriggerServerEvent('PlsChangeMyVoiceByRadio', 0, radioChannel)
-                voiceactive = true
-                SendNUIMessage({
-                    meta = 'voiceoff'
-                })
+        else 
+            if keyradio == 1 and keyblock == 0 then
+                keyradio = 0
+                SendNUIMessage({ pack = "VOICE_R", set = keyradio })
+                TriggerServerEvent('VOICE_R', useLocalData.player.pId, keyradio)
             end
-        end  
-        if IsGameKeyboardKeyPressed(50) then
-            if chatst == 0 and chatstnewl == 0 then
-                chatst = 1
-                TriggerServerEvent('PlsChangeMyVoice', 1)
-                voiceactive = true
-                SendNUIMessage({
-                    meta = 'voiceon'
-                })
-                
-                
-            end
-        else
-            
-            if chatst == 1 then
-                chatst = 0
-                TriggerServerEvent('PlsChangeMyVoice', 0)
-                voiceactive = false
-                SendNUIMessage({
-                    meta = 'voiceoff'
-                })
-            
-            end
-        end  
+        end
     end
-
 end)
