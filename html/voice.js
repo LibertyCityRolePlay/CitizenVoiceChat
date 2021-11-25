@@ -28,19 +28,19 @@ IvContPeer.SetClientStatus = function(status) {
     switch(status)
     {
         case IvContPeer.READY: {
-            $('#micro').attr('src', 'off.png');
+            $('#micro').attr('src',useLocalDate["settings"]["useIcons"].offVoiceChat);
             break;
         }
         case IvContPeer.BTNCLICK: {
-            $('#micro').attr('src', 'on.png');
+            $('#micro').attr('src',useLocalDate["settings"]["useIcons"].offVoiceChat);
             break;
         }
         case IvContPeer.RADIOBTNCLICK: {
-            $('#micro').attr('src', 'onr.png');
+            $('#micro').attr('src',useLocalDate["settings"]["useIcons"].onRadioVoiceChat);
             break;
         }
         case IvContPeer.ERROR: {
-            $('#micro').attr('src', 'error.png');
+            $('#micro').attr('src',useLocalDate["settings"]["useIcons"].errorVoiceChat);
             break;
         }
     }
@@ -101,12 +101,13 @@ IvContPeer.sHandlers.Open = function(id) {
     IvContPeer.sPeer.on('call', IvContPeer.sHandlers.Call)
 }
 
-StartLocalClient("MAIN", 2, "AA");
-ConnectToPlayer(1, "ABS")
 function StartLocalClient(SecuryID, pId, pName) {
     useLocalDate.sID = SecuryID;
     useLocalDate.pId = pId;
     useLocalDate.pName = pName;
+    useLocalDate.pChannel = useLocalDate["settings"].defaultRadioVoiceChat;
+    $("#micro").attr("style", useLocalDate["settings"]["useCss"].VoiceIcon);
+    //$('#micro').attr('src',useLocalDate["settings"]["useIcons"].errorVoiceChat);
     IvContPeer.SetClientStatus(IvContPeer.WAITSTART);
     IvContPeer.SetConsole(`Starting VoiceChat. (${useLocalDate.pId}${useLocalDate.sID})`, true);
     
@@ -146,13 +147,14 @@ function ConnectToPlayer(pID, pName) {
             namepla = namepla.replace('_', ' ');
             allPlayersList[pID].uiObj = document.createElement('p')
             allPlayersList[pID].uiObj.id = "voiceui_"+pID;
-            allPlayersList[pID].uiObj.style.fontFamily = "'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif";
+            $(allPlayersList[pID].uiObj).attr("style", useLocalDate["settings"]["useCss"].VoicePlayers)
+            /*allPlayersList[pID].uiObj.style.fontFamily = "'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif";
             allPlayersList[pID].uiObj.style.fontSize = "1.5vh";
             allPlayersList[pID].uiObj.innerText = ""+namepla;
             allPlayersList[pID].uiObj.style.textAlign = "center";
             allPlayersList[pID].uiObj.style.color = "#78d85d";
             allPlayersList[pID].uiObj.style.backgroundColor = "rgba(0, 0, 0, 0.418)";
-            allPlayersList[pID].uiObj.style.padding = "5px";
+            allPlayersList[pID].uiObj.style.padding = "5px";*/
             document.getElementById('audui').appendChild(allPlayersList[pID].uiObj);
 
             $("#voiceui_"+pID).hide();
@@ -169,11 +171,12 @@ window.addEventListener('message', function(event)
 
     switch(event.data.pack) {
         case IvContPeer.LuaConverted.START: {
-            StartLocalClient(event.data.sKey, event.data.pId, event.data.pName);
+            useLocalDate.settings = event.data.settings;
+            useLocalDate["settings"].enabledVoiceChat ? StartLocalClient(event.data.sKey, event.data.pId, event.data.pName) : IvContPeer.DebugLog("VoiceChat disabled from settings.lua");
             break;   
         }
         case IvContPeer.LuaConverted.STOP: {
-            // Nop
+            useLocalDate["settings"].enabledVoiceChat = false;
             break;
         }
         case IvContPeer.LuaConverted.LUAFUNCTION: {

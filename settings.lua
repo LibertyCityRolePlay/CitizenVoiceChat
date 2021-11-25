@@ -6,15 +6,14 @@ getSettings = {
     useRadioVoiceChat       =   true                ,-- Use communication channel.
     limitRadioVoiceChat     =   10000               ,-- Limit of parallel communication channels.
     keyRadioVoiceChat       =   49                  ,-- Using the walkie-talkie mode on the key. Default - N.
-    restartOnError          =   false               ,-- Reload the entire voice chat if an error occurs for any player. (Warning! May cause endless looping and crash of all players)
     securyKeyVoiceChat      =   10                  ,-- The number of characters in the voice chat key.
     defaultRadioVoiceChat   =   0                   ,-- Set the default communication channel
 
     useCss = { -- Using css style for voice chat
         VoiceIcon = [[
-            position: absolute;
+            position: absolute; 
+            bottom: 30px; 
             right: 10px;
-            bottom: 10px;
         ]],
         VoicePlayers = [[
             font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
@@ -27,10 +26,10 @@ getSettings = {
     },
 
     useIcons = { -- Voice chat icons
-        onVoiceChat         =   "icons/on.png"      ,-- Voice chat key pressed.
-        offVoiceChat        =   "icons/off.png"     ,-- Voice chat in standby mode.
-        onRadioVoiceChat    =   "icons/onr.png"     ,-- The voice chat key in the walkie-talkie mode is pressed.    
-        errorVoiceChat      =   "icons/error.png"    -- If an error occurs.
+        onVoiceChat         =   "on.png"      ,-- Voice chat key pressed.
+        offVoiceChat        =   "off.png"     ,-- Voice chat in standby mode.
+        onRadioVoiceChat    =   "onr.png"     ,-- The voice chat key in the walkie-talkie mode is pressed.    
+        errorVoiceChat      =   "error.png"    -- If an error occurs.
     }
 }
 

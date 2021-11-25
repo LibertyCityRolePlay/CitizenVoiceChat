@@ -30,7 +30,8 @@ AddEventHandlerNew('CheckPlayer', function(pID, securyKey)
             pack = "START",
             sKey = securyKey,
             pName = GetPlayerName(),
-            pId = rStatus
+            pId = rStatus,
+            settings = getSettings
     
         })
     end)
@@ -98,7 +99,7 @@ RegisterNUICallback('PlayerConnectedToVoice', function(data, cb)
     --TriggerServerEvent('ConnectToPlayer', useLocalData["list"][data.pId].pId, useLocalData["list"][data.pId].pName)
 end)
 Citizen.CreateThread(function()
-    while true do
+    while getSettings.enabledVoiceChat do
         Citizen.Wait(1000)
         if useLocalData.player.status == true then
             for i = 0, 31 do
@@ -158,9 +159,9 @@ end)
 Citizen.CreateThread(function()
     local keyblock = 0 
     local keyradio = 0 
-    while true do
+    while getSettings.enabledVoiceChat do
         Citizen.Wait(1)
-        if IsGameKeyboardKeyPressed(50) then
+        if IsGameKeyboardKeyPressed(getSettings.keyVoiceChat) then
             if keyblock == 0 then
                 if keyradio == 1 then
                     keyradio = 0
@@ -180,7 +181,7 @@ Citizen.CreateThread(function()
             end
         end
 
-        if IsGameKeyboardKeyPressed(49) then
+        if IsGameKeyboardKeyPressed(getSettings.keyRadioVoiceChat) then
             if keyradio == 0 and keyblock == 0 then
                 keyradio = 1
                 SendNUIMessage({ pack = "VOICE_R", set = keyradio })
