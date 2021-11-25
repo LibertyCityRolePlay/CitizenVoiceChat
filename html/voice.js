@@ -1,6 +1,7 @@
 let useLocalDate = { }; // Все, что связяно с нашим игроком
 let allPlayersList = { };
 let IvContPeer = { }; // Все, что свяхано с Голосовым сатом
+let useDebugMode = false;
 useLocalDate.pChannel = 0;
 useLocalDate.pVolume = 1.0;
 IvContPeer.READY = 1;
@@ -22,7 +23,7 @@ IvContPeer.LuaConverted.CHANGEVOICER = "CHANGE_PLAYER_VOICE_R";
 IvContPeer.LuaConverted.SET_PLAYER_CHANNEL = "SetPlayerChannel";
 IvContPeer.LuaConverted.SET_PLAYER_VOLUME = "SetPlayerVolume";
 IvContPeer.SetClientStatus = function(status) {
-    console.log("SET STATUS " + status);
+    IvContPeer.DebugLog("SET STATUS " + status);
     useLocalDate.pStatus = status;
     switch(status)
     {
@@ -44,18 +45,24 @@ IvContPeer.SetClientStatus = function(status) {
         }
     }
 }
+
+IvContPeer.DebugLog = function(text) {
+    useDebugMode ? console.log(`[ALV-VoiceChat] ${text}`) : false;
+    return useDebugMode;
+}
+
 IvContPeer.LuaConverted.SendLuaData = function(nameHandler, dataObj) {
     $.post(`http://alv-voicechat/${nameHandler}`, JSON.stringify(dataObj), function(data) { 
-        console.log(`[ALV-voicechat] ${data}`);
+        IvContPeer.DebugLog(` ${data}`);
     });
 }
 
 IvContPeer.SetConsole = function(text, status) {
     if(status) {
-        console.log(useLocalDate);
-        console.log(allPlayersList);
-        console.log(IvContPeer);
-        console.log(`[ALV-voicechat]
+        IvContPeer.DebugLog(useLocalDate);
+        IvContPeer.DebugLog(allPlayersList);
+        IvContPeer.DebugLog(IvContPeer);
+        IvContPeer.DebugLog(`
         useLocalDate: ${useLocalDate}
         allPlayersList: ${allPlayersList}
         IvContPeer: ${IvContPeer}
@@ -64,7 +71,7 @@ IvContPeer.SetConsole = function(text, status) {
     }
     else
     {
-        console.log(`[ALV-voicechat] (((${text})))`);
+        IvContPeer.DebugLog(` (((${text})))`);
     }
     
 }
@@ -242,7 +249,7 @@ window.addEventListener('message', function(event)
             break;
         }
         case IvContPeer.LuaConverted.VOICE: {
-            console.log("CHANGE TO SET " + event.data.set + " " + useLocalDate.pStatus);
+            IvContPeer.DebugLog("CHANGE TO SET " + event.data.set + " " + useLocalDate.pStatus);
             if(event.data.set == 1 && useLocalDate.pStatus == IvContPeer.READY) {
                 IvContPeer.SetClientStatus(IvContPeer.BTNCLICK);
             } else if(event.data.set == 0 && useLocalDate.pStatus == IvContPeer.BTNCLICK) { 
@@ -265,7 +272,7 @@ window.addEventListener('message', function(event)
             break;
         }
         case IvContPeer.LuaConverted.DISCONNECT: {
-            console.log("DISCONNECT LOG! " + event.data.pId);
+            IvContPeer.DebugLog("DISCONNECT LOG! " + event.data.pId);
             if(allPlayersList[event.data.pId].audioObj)
             {
                 allPlayersList[event.data.pId].audioObj.remove();
