@@ -8,7 +8,8 @@ getSettings = {
     keyRadioVoiceChat       =   49                  ,-- Using the walkie-talkie mode on the key. Default - N.
     restartOnError          =   false               ,-- Reload the entire voice chat if an error occurs for any player. (Warning! May cause endless looping and crash of all players)
     securyKeyVoiceChat      =   10                  ,-- The number of characters in the voice chat key.
-    
+    defaultRadioVoiceChat   =   0                   ,-- Set the default communication channel
+
     useCss = { -- Using css style for voice chat
         VoiceIcon = [[
             position: absolute;
