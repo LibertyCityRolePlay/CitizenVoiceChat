@@ -132,4 +132,32 @@ Example:
 ```lua
   local volume = export.voicechat:GetPlayerVolume(-1)
 ```
+
+---
+SetPlayer (playerID)
+ 
+  *Arguments:*
+  > playerID (-1 - 31) - The identifier of the player. Use -1 for local player
+
+  *Return:*
+  > Volume (0.0 - 1.0) - Volume level.
+ 
+Example:
+```lua
+  local volume = export.voicechat:GetPlayerVolume(-1)
+```
+
+---
+SetPlayerLocalVoiceChatRadius (radius)
+ 
+  *Arguments:*
+  > radius (> 0.0) - The radius in which the player will hear other players in the local voice chat
+
+  *Return:*
+  > nil
+ 
+Example:
+```lua
+  local volume = export.voicechat:SetPlayerLocalVoiceChatRadius(7.9)
+```
  
