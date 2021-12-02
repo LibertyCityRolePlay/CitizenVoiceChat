@@ -30,11 +30,9 @@ Example:
  ```
  
  ---
- Ban (playerID, status)
+ BanMicrophone (status)
  
   *Arguments:*
-  > playerID (-1 - 31) - The identifier of the player. Use -1 to block local player voice chat.
-  
   > status (true or false) - TRUE - ban, FALSE - unban
   
   *Return:*
@@ -42,21 +40,21 @@ Example:
 
 Example:
 ```lua
-  export.voicechat:Ban(12, true)
+  export.voicechat:BanMicrophone(true)
  ```
  
  ---
- PlayerHasBan (playerID)
+ PlayerHasBanMicrophone ()
  
   *Arguments:*
-  > playerID (-1 - 31) - The identifier of the player. Use -1 to block local player voice chat.
+  > nil
   
   *Return:*
   > status (true or false) - TRUE - ban, FALSE - unban
 
 Example:
 ```lua
-  local playerBan = export.voicechat:PlayerHasBan(18)
+  local playerBan = export.voicechat:PlayerHasBan()
  ```
  
  ---
@@ -76,11 +74,9 @@ Example:
  ```
  
  ---
- SetPlayerChannel (playerID, channelID)
+ SetPlayerChannel (channelID)
  
   *Arguments:*
-  > playerID (-1 - 31) - The identifier of the player. Use -1 for local player
-
   > channelID (-1 - maxChannel) - Radio channel code. Use -1 to switch global radio voice chat.
   
   *Return:*
@@ -88,14 +84,14 @@ Example:
 
 Example:
 ```lua
-  export.voicechat:SetPlayerChannel(-1, 12)
+  export.voicechat:SetPlayerChannel(12)
  ```
  
   ---
- GetPlayerChannel (playerID)
+ GetPlayerChannel ()
  
   *Arguments:*
-  > playerID (-1 - 31) - The identifier of the player. Use -1 for local player
+  > nil
   
   *Return:*
   > channelID (-1, maxChannel) - Radio channel code.
@@ -132,21 +128,6 @@ Example:
 ```lua
   local volume = export.voicechat:GetPlayerVolume(-1)
 ```
-
----
-SetPlayer (playerID)
- 
-  *Arguments:*
-  > playerID (-1 - 31) - The identifier of the player. Use -1 for local player
-
-  *Return:*
-  > Volume (0.0 - 1.0) - Volume level.
- 
-Example:
-```lua
-  local volume = export.voicechat:GetPlayerVolume(-1)
-```
-
 ---
 SetPlayerLocalVoiceChatRadius (radius)
  
