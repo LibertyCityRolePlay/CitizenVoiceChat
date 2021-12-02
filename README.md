@@ -119,14 +119,14 @@ Example:
 GetPlayerVolume (playerID)
  
   *Arguments:*
-  > playerID (-1 - 31) - The identifier of the player. Use -1 for local player
+  > playerID (0 - 31) - The identifier of the player.
 
   *Return:*
   > Volume (0.0 - 1.0) - Volume level.
  
 Example:
 ```lua
-  local volume = export.voicechat:GetPlayerVolume(-1)
+  local volume = export.voicechat:GetPlayerVolume(13)
 ```
 ---
 SetPlayerLocalVoiceChatRadius (radius)
