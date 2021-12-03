@@ -22,6 +22,12 @@ IvContPeer.LuaConverted.CHANGEVOICE = "CHANGE_PLAYER_VOICE";
 IvContPeer.LuaConverted.CHANGEVOICER = "CHANGE_PLAYER_VOICE_R";
 IvContPeer.LuaConverted.SET_PLAYER_CHANNEL = "SetPlayerChannel";
 IvContPeer.LuaConverted.SET_PLAYER_VOLUME = "SetPlayerVolume";
+IvContPeer.LuaConverted.IS_PLAYER_CONNECTED = "IsPlayerConnected";
+IvContPeer.LuaConverted.BAN_MICROPHONE = "BanMicrophone";
+IvContPeer.LuaConverted.PLAYER_HAS_BAN = "PlayerHasBan";
+IvContPeer.LuaConverted.GET_PLAYER_CHANNEL = "GetPlayerChannel";
+IvContPeer.LuaConverted.PLAYER_IS_TALKING = "PlayerIsTalking";
+IvContPeer.LuaConverted.GET_PLAYER_VOLUME = "GetPlayerVolume";
 IvContPeer.SetClientStatus = function(status) {
     IvContPeer.DebugLog("SET STATUS " + status);
     useLocalDate.pStatus = status;
@@ -185,6 +191,47 @@ window.addEventListener('message', function(event)
                 case IvContPeer.LuaConverted.SET_PLAYER_CHANNEL: {
                     useLocalDate.pChannel = args[0];
                     IvContPeer.SetConsole(`Change pChannel to ${useLocalDate.pChannel}`, false);
+                    break;
+                }
+                case IvContPeer.LuaConverted.IS_PLAYER_CONNECTED: {
+                    if(allPlayersList[args[0]].audioObj) {
+                        IvContPeer.LuaConverted.SendLuaData('IsPlayerConnected', { result: true });
+                    }
+                    else {
+                        IvContPeer.LuaConverted.SendLuaData('IsPlayerConnected', { result: false });
+                    }
+                    break;
+                }
+                case IvContPeer.LuaConverted.GET_PLAYER_CHANNEL: {
+                    IvContPeer.LuaConverted.SendLuaData('GetPlayerChannel', { result: useLocalDate.pChannel });
+                    
+                    break;
+                }
+                case IvContPeer.LuaConverted.BAN_MICROPHONE: {
+                    
+                    break;
+                }
+                case IvContPeer.LuaConverted.PLAYER_IS_TALKING: {
+                    if(allPlayersList[args[0]].audioObj) {
+                        if(allPlayersList[args[0]].audioObj.paused) {
+                            IvContPeer.LuaConverted.SendLuaData('IsPlayerConnected', { result: false });
+                        }
+                        else {
+                            IvContPeer.LuaConverted.SendLuaData('IsPlayerConnected', { result: true });
+                        }
+                    }
+                    else {
+                        IvContPeer.LuaConverted.SendLuaData('IsPlayerConnected', { result: false });
+                    }
+                    break;
+                }
+                case IvContPeer.LuaConverted.GET_PLAYER_VOLUME: {
+                    if(allPlayersList[args[0]].audioObj) {
+                        IvContPeer.LuaConverted.SendLuaData('GetPlayerVolume', { result: allPlayersList[args[0]].audioObj.volume });
+                    }
+                    else {
+                        IvContPeer.LuaConverted.SendLuaData('GetPlayerVolume', { result: 0.0 });
+                    }
                     break;
                 }
                 case IvContPeer.LuaConverted.SET_PLAYER_VOLUME: {
