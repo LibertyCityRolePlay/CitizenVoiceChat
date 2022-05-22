@@ -1,3 +1,5 @@
+--0.1 Beta
+
 ui_page 'html/index.html'
 
 files {
