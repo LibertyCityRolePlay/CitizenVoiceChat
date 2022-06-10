@@ -38,7 +38,7 @@ IvContPeer.SetClientStatus = function(status) {
             break;
         }
         case IvContPeer.BTNCLICK: {
-            $('#micro').attr('src',useLocalDate["settings"]["useIcons"].offVoiceChat);
+            $('#micro').attr('src',useLocalDate["settings"]["useIcons"].onVoiceChat);
             break;
         }
         case IvContPeer.RADIOBTNCLICK: {
@@ -58,7 +58,7 @@ IvContPeer.DebugLog = function(text) {
 }
 
 IvContPeer.LuaConverted.SendLuaData = function(nameHandler, dataObj) {
-    $.post(`http://alv-voicechat/${nameHandler}`, JSON.stringify(dataObj), function(data) { 
+    $.post(`http://voicechat/${nameHandler}`, JSON.stringify(dataObj), function(data) { 
         IvContPeer.DebugLog(` ${data}`);
     });
 }
@@ -144,7 +144,7 @@ function ConnectToPlayer(pID, pName) {
             allPlayersList[pID].audioObj.controls = 'controls';
             allPlayersList[pID].audioObj.autoplay = '';
             allPlayersList[pID].audioObj.volume = useLocalDate.pVolume;
-            allPlayersList[pID].audioObj.style.opacity = "1.0";
+            allPlayersList[pID].audioObj.style.opacity = "0";
             allPlayersList[pID].audioObj.pause();
             //newwlements.start();
            
@@ -263,6 +263,7 @@ window.addEventListener('message', function(event)
             if(event.data.set == 1) {
                 if(allPlayersList[event.data.pId].audioObj)
                 {
+					useLocalDate.pVolume = event.data.vol;
                     allPlayersList[event.data.pId].audioObj.play();
                     $("#voiceui_"+event.data.pId).show();
                 }
