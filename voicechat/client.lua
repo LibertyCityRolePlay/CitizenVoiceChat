@@ -10,6 +10,7 @@ useLocalData.list = { }
 useLocalData.keyDown = false
 useLocalData.BanMicrophone = false
 useLocalData.PlayerTalking = false
+useLocalData.channel = 0
 AddEventHandlerNew('CheckPlayer', function(pID, securyKey)
     Citizen.CreateThread(function()
         local rStatus = -1
@@ -43,13 +44,7 @@ end)
 
 function SetPlayerChannel(pChannel) 
     if pChannel >= 0 and pChannel < getSettings.limitRadioVoiceChat then
-        SendNUIMessage({
-            pack = "START_FUNCTION",
-            func = "SetPlayerChannel",
-            args = { 
-                [1] = pChannel 
-            }
-        })
+        useLocalData.channel = pChannel
         return true
     else
         return false
@@ -57,7 +52,7 @@ function SetPlayerChannel(pChannel)
 end
 
 function SetPlayerVolume(pId, pVolume) 
-    if pVolume >= 0.0 and pVolume < 1.0 then
+    if pVolume >= 0.0 and pVolume <= 1.0 then
         SendNUIMessage({
             pack = "START_FUNCTION",
             func = "SetPlayerVolume",
@@ -108,10 +103,10 @@ function BanMicrophone(pStatus)
         pack = "START_FUNCTION",
         func = "BanMicrophone",
         args = { 
-            [1] = pId
+            [1] = convertParam
         }
     })
-
+    useLocalData.BanMicrophone = convertParam
     return convertParam
 end
 
@@ -138,23 +133,7 @@ RegisterNUICallback('GetPlayerChannel', function(data, cb)
 end)
 
 function GetPlayerChannel()
-    local tResult = false
-    SendNUIMessage({
-        pack = "START_FUNCTION",
-        func = "GetPlayerChannel",
-        args = { 
-            
-        }
-    })
-    GetPlayerChannelResult = nil
-    while true do
-        Citizen.Wait(0)
-        if GetPlayerChannelResult ~= nil then
-            break
-        end
-    end
-    tResult = GetPlayerChannelResult
-    return tResult
+    return useLocalData.channel
 end
 
 local PlayerIsTalkingResult = nil
@@ -163,29 +142,8 @@ RegisterNUICallback('PlayerIsTalking', function(data, cb)
     PlayerIsTalkingResult = data.result
 end)
 
-function PlayerIsTalking(pId)
-    local tResult = false
-    if pId == -1 then
-        tResult = useLocalData.PlayerTalking
-    else
-        PlayerIsTalkingResult = nil
-        SendNUIMessage({
-            pack = "START_FUNCTION",
-            func = "PlayerIsTalkingResult",
-            args = { 
-                [1] = pId
-            }
-        })
-        while true do
-            Citizen.Wait(0)
-            if PlayerIsTalkingResult ~= nil then
-                break
-            end
-        end
-        tResult = PlayerIsTalkingResult
-
-    end
-    return tResult
+function PlayerIsTalking()
+    return useLocalData.PlayerTalking
 end
 
 
@@ -226,23 +184,11 @@ RegisterNUICallback('StartSearchPlayers', function(data, cb)
     TriggerServerEvent('ConnectToMeAccept', data)
 end)
 
-AddEventHandlerNew('ResultConnectToMeAccept', function(data)
-    --[[Citizen.Trace("\n[Main Voice]  ` 'ResultConnectToMeAccept'")
-    if data.pId ~= useLocalData.player.pId then
-        Citizen.Trace("\n[Main Voice] if data.pId ~= useLocalData.player.pId then")
-        if useLocalData["list"][data.pId] == nil then
-            useLocalData["list"][data.pId] = { }
-        end
-        useLocalData["list"][data.pId].lastuse = 15
-        useLocalData["list"][data.pId].pName = data.pName
-        useLocalData["list"][data.pId].pId = data.pId
-    end]]
-end)
+AddEventHandlerNew('ResultConnectToMeAccept', function(data) end)
 
 RegisterNUICallback('PlayerConnectedToVoice', function(data, cb)
     cb('a')
     useLocalData["list"][data.pId].lastuse = -1
-    --TriggerServerEvent('ConnectToPlayer', useLocalData["list"][data.pId].pId, useLocalData["list"][data.pId].pName)
 end)
 Citizen.CreateThread(function()
     while getSettings.enabledVoiceChat do
@@ -256,12 +202,16 @@ Citizen.CreateThread(function()
                             useLocalData["list"][i].lastuse = 15
                             useLocalData["list"][i].pName = GetPlayerName(i)
                             useLocalData["list"][i].pId = i
+                            useLocalData["list"][i].volumeBlink = false
+                            useLocalData["list"][i].channelActive = false
                         else
                             if useLocalData["list"][i].pName ~= GetPlayerName(i) then
                                 useLocalData["list"][i] = { }
                                 useLocalData["list"][i].lastuse = 15
                                 useLocalData["list"][i].pName = GetPlayerName(i)
                                 useLocalData["list"][i].pId = i
+                                useLocalData["list"][i].volumeBlink = false
+                                useLocalData["list"][i].channelActive = false
                                 SendNUIMessage({
                                     pack = "DISCONNECT",
                                     pId = useLocalData["list"][i].pId
@@ -295,28 +245,74 @@ Citizen.CreateThread(function()
         end
     end
 end)
-
+AddEventHandlerNew('ResultVOICE_R', function(pId, keyStatus, pChannel)
+    if useLocalData.player.pId ~= pId and pChannel == useLocalData.channel then
+        SendNUIMessage({ pack = "CHANGE_PLAYER_VOICE_R", set = keyStatus, pId = pId })
+        if keyStatus == 1 then 
+            SetPlayerVolume(pId, 1.0)
+            useLocalData["list"][i].channelActive = true
+        else 
+            SetPlayerVolume(pId, 0.0) 
+            useLocalData["list"][i].channelActive = false 
+        end
+    end
+end)
 AddEventHandlerNew('ResultVOICE_L', function(pId, keyStatus)
     if useLocalData.player.pId ~= pId then
         SendNUIMessage({ pack = "CHANGE_PLAYER_VOICE", set = keyStatus, pId = pId })
     end
 end)
-
+Citizen.CreateThread(function() 
+    while true do
+        Citizen.Wait(1)
+        for i = 0, 31 do
+            if IsNetworkPlayerActive(i) and useLocalData["list"][i] ~= nil and (not useLocalData["list"][i].channelActive) then
+                if(ConvertIntToPlayerindex(i) ~= ConvertIntToPlayerindex(GetPlayerId())) then
+                    local ped = GetPlayerChar(i)
+                    local rX, rY, rZ =  GetCharCoordinates(ped)
+                    local x, y, z = GetCharCoordinates(GetPlayerChar(-1))
+                    local dist = GetDistanceBetweenCoords3d(x, y, z, rX, rY, rZ)
+                    if dist < getSettings.localVoiceChatDistance then
+                        local newVol = 1 - (dist / getSettings.localVoiceChatDistance)
+                        if not useLocalData["list"][i].volumeBlink then
+                            if newVol < 0.1 then 
+                                newVol = 0.0 
+                                useLocalData["list"][i].volumeBlink = true 
+                            end
+                            if newVol > 1 then newVol = 1.0 end
+                            SetPlayerVolume(i, newVol)
+                        elseif  newVol > 0.1 then
+                            useLocalData["list"][i].volumeBlink = false
+                            if newVol > 1 then newVol = 1.0 end
+                            SetPlayerVolume(i, newVol)
+                        end
+                    end
+                    
+                end
+            end
+        end 
+    end
+end)
 Citizen.CreateThread(function()
     local keyblock = 0 
     local keyradio = 0 
     while getSettings.enabledVoiceChat do
         Citizen.Wait(1)
+
+        if IsGameKeyboardKeyJustPressed(24) then
+            if PlayerHasBanMicrophone() then
+                BanMicrophone(false)
+            else
+                BanMicrophone(true)
+            end
+        end
+
         if useLocalData.BanMicrophone == false then
+            
+
             if IsGameKeyboardKeyPressed(getSettings.keyVoiceChat) then
                 if keyblock == 0 then
                     useLocalData.PlayerTalking = true
-                    if keyradio == 1 then
-                        keyradio = 0
-                        SendNUIMessage({ pack = "VOICE_R", set = keyradio })
-                        TriggerServerEvent('VOICE_R', useLocalData.player.pId, keyradio)
-                    end
-
                     keyblock = 1
                     SendNUIMessage({ pack = "VOICE_L", set = keyblock })
                     TriggerServerEvent('VOICE_L', useLocalData.player.pId, keyblock)
@@ -332,21 +328,38 @@ Citizen.CreateThread(function()
 
             if IsGameKeyboardKeyPressed(getSettings.keyRadioVoiceChat) then
                 if keyradio == 0 and keyblock == 0 then
+                    if keyblock == 1 then
+                        keyblock = 0
+                        SendNUIMessage({ pack = "VOICE_L", set = keyblock })
+                        TriggerServerEvent('VOICE_L', useLocalData.player.pId, keyblock)
+                    end
                     keyradio = 1
                     useLocalData.PlayerTalking = true
                     SendNUIMessage({ pack = "VOICE_R", set = keyradio })
-                    TriggerServerEvent('VOICE_R', useLocalData.player.pId, keyradio)
+                    TriggerServerEvent('VOICE_R', useLocalData.player.pId, keyradio, useLocalData.channel)
                 end
             else 
                 if keyradio == 1 and keyblock == 0 then
                     keyradio = 0
                     useLocalData.PlayerTalking = false
                     SendNUIMessage({ pack = "VOICE_R", set = keyradio })
-                    TriggerServerEvent('VOICE_R', useLocalData.player.pId, keyradio)
+                    TriggerServerEvent('VOICE_R', useLocalData.player.pId, keyradio, useLocalData.channel)
                 end
             end
         else
+            if keyblock == 1 then
+                keyblock = 0
+                useLocalData.PlayerTalking = false
+                SendNUIMessage({ pack = "VOICE_L", set = keyblock })
+                TriggerServerEvent('VOICE_L', useLocalData.player.pId, keyblock)
+            end
 
+            if keyradio == 1 then
+                keyradio = 0
+                useLocalData.PlayerTalking = false
+                SendNUIMessage({ pack = "VOICE_R", set = keyradio })
+                TriggerServerEvent('VOICE_R', useLocalData.player.pId, keyradio, useLocalData.channel)
+            end
         end
     end
 end)

@@ -3,10 +3,16 @@
 ui_page 'html/index.html'
 
 files {
-    'html/error.png',
-    'html/off.png',
+    'html/sound.png',
+    'html/soundr.png',
+    'html/err.png',
     'html/on.png',
+    'html/mute.png',
     'html/onr.png',
+    'html/jq.js',
+    'html/material.woff2',
+    'html/st.css',
+    'html/vc.js',
     'html/voice.js',
     'html/index.html'
 }

@@ -1,7 +1,9 @@
-let useLocalDate = { }; // Все, что связяно с нашим игроком
+let useLocalDate = { };
 let allPlayersList = { };
-let IvContPeer = { }; // Все, что свяхано с Голосовым сатом
+let IvContPeer = { };
 let useDebugMode = false;
+let debugIds = 0;
+let localMuted = false;
 useLocalDate.pChannel = 0;
 useLocalDate.pVolume = 1.0;
 IvContPeer.READY = 1;
@@ -28,39 +30,55 @@ IvContPeer.LuaConverted.PLAYER_HAS_BAN = "PlayerHasBan";
 IvContPeer.LuaConverted.GET_PLAYER_CHANNEL = "GetPlayerChannel";
 IvContPeer.LuaConverted.PLAYER_IS_TALKING = "PlayerIsTalking";
 IvContPeer.LuaConverted.GET_PLAYER_VOLUME = "GetPlayerVolume";
+if(!useDebugMode) { $("#debugContainer").hide(); }
+$('#micro').hide();
 IvContPeer.SetClientStatus = function(status) {
     IvContPeer.DebugLog("SET STATUS " + status);
-    useLocalDate.pStatus = status;
-    switch(status)
-    {
-        case IvContPeer.READY: {
-            $('#micro').attr('src',useLocalDate["settings"]["useIcons"].offVoiceChat);
-            break;
-        }
-        case IvContPeer.BTNCLICK: {
-            $('#micro').attr('src',useLocalDate["settings"]["useIcons"].onVoiceChat);
-            break;
-        }
-        case IvContPeer.RADIOBTNCLICK: {
-            $('#micro').attr('src',useLocalDate["settings"]["useIcons"].onRadioVoiceChat);
-            break;
-        }
-        case IvContPeer.ERROR: {
-            $('#micro').attr('src',useLocalDate["settings"]["useIcons"].errorVoiceChat);
-            break;
+    if(status != -1) {
+        useLocalDate.pStatus = status;
+    }
+    if (localMuted) {
+        $('#micro').attr('src', useLocalDate["settings"]["useIcons"].muteVoiceChat);
+        $('#micro').show();
+    }
+    else if(status == -1) {
+        $('#micro').hide();
+    }
+    else {
+        switch(status)
+        {
+            case IvContPeer.READY: { $('#micro').hide(); break; }
+            case IvContPeer.BTNCLICK: { $('#micro').attr('src', useLocalDate["settings"]["useIcons"].onVoiceChat); $('#micro').show(); break; }
+            case IvContPeer.RADIOBTNCLICK: { $('#micro').attr('src', useLocalDate["settings"]["useIcons"].onRadioVoiceChat); $('#micro').show(); break; }
+            case IvContPeer.ERROR: { $('#micro').attr('src', useLocalDate["settings"]["useIcons"].errorVoiceChat); $('#micro').show(); break; }
         }
     }
 }
 
 IvContPeer.DebugLog = function(text) {
-    useDebugMode ? console.log(`[ALV-VoiceChat] ${text}`) : false;
+    if(useDebugMode) {
+        console.log(`[ALV-VoiceChat] ${text}`);
+        $("#debugContainer").html(`${$("#debugContainer").html()} 
+        <div id="sl-${debugIds}">
+            <h6>${text}</h6>
+            <script type="text/javascript">
+                setTimeout(function() {
+                    $("#thisid-`+debugIds+`").fadeOut(400, function()
+                    {
+                        $("#thisid-`+debugIds+`").remove();
+                    });
+                }, 7500);
+            </script>
+        </div>  
+        `);
+        debugIds += 1;
+        $("#debugContainer").scrollTop(1000);
+    }
     return useDebugMode;
 }
 
 IvContPeer.LuaConverted.SendLuaData = function(nameHandler, dataObj) {
-    $.post(`http://voicechat/${nameHandler}`, JSON.stringify(dataObj), function(data) { 
-        IvContPeer.DebugLog(` ${data}`);
-    });
+    $.post(`http://voicechat/${nameHandler}`, JSON.stringify(dataObj), function(data) { IvContPeer.DebugLog(` ${data}`); });
 }
 
 IvContPeer.SetConsole = function(text, status) {
@@ -112,8 +130,6 @@ function StartLocalClient(SecuryID, pId, pName) {
     useLocalDate.pId = pId;
     useLocalDate.pName = pName;
     useLocalDate.pChannel = useLocalDate["settings"].defaultRadioVoiceChat;
-    $("#micro").attr("style", useLocalDate["settings"]["useCss"].VoiceIcon);
-    //$('#micro').attr('src',useLocalDate["settings"]["useIcons"].errorVoiceChat);
     IvContPeer.SetClientStatus(IvContPeer.WAITSTART);
     IvContPeer.SetConsole(`Starting VoiceChat. (${useLocalDate.pId}${useLocalDate.sID})`, true);
     
@@ -124,16 +140,15 @@ function StartLocalClient(SecuryID, pId, pName) {
 }
 
 function ConnectToPlayer(pID, pName) {
-    IvContPeer.SetConsole("Microphone search...", false);
+    IvContPeer.DebugLog("Search microphone...");
     navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
     navigator.getUserMedia({video: false, audio: true}, function(stream) {
-        IvContPeer.SetConsole(`Microphone found. Attempting to connect to a player ${pID}${useLocalDate.sID}`, false);
+        IvContPeer.DebugLog(`Microphone found. Attempting to connect to a player ${pID}${useLocalDate.sID}`);
         allPlayersList[pID] = [ ];
         allPlayersList[pID].pName = pName;
         allPlayersList[pID].callHandler = IvContPeer.sPeer.call(`${pID}${useLocalDate.sID}`, stream);
         allPlayersList[pID].callHandler.on('stream', function(remoteStream) {
-              
-            IvContPeer.SetConsole(`Connected to pName ${allPlayersList[pID].pName} [${pID}] succ! Create AudioStream...`, false);
+            IvContPeer.DebugLog(`CONNECTED TO PEER. pName: ${allPlayersList[pID].pName} pID: ${pID}. CREATING AUDIOSTREAM...`);
            
             allPlayersList[pID].audioObj = document.createElement('audio');
             allPlayersList[pID].audioObj.id = "voicer_" + pID;
@@ -143,38 +158,31 @@ function ConnectToPlayer(pID, pName) {
             allPlayersList[pID].audioObj.srcObject = remoteStream;
             allPlayersList[pID].audioObj.controls = 'controls';
             allPlayersList[pID].audioObj.autoplay = '';
-            allPlayersList[pID].audioObj.volume = useLocalDate.pVolume;
+            allPlayersList[pID].audioObj.volume = 0.0;
             allPlayersList[pID].audioObj.style.opacity = "0";
             allPlayersList[pID].audioObj.pause();
-            //newwlements.start();
-           
+
             let namepla = pName;
             namepla = namepla.toUpperCase();
             namepla = namepla.replace('_', ' ');
-            allPlayersList[pID].uiObj = document.createElement('p')
-            allPlayersList[pID].uiObj.id = "voiceui_"+pID;
-            $(allPlayersList[pID].uiObj).attr("style", useLocalDate["settings"]["useCss"].VoicePlayers)
-            /*allPlayersList[pID].uiObj.style.fontFamily = "'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif";
-            allPlayersList[pID].uiObj.style.fontSize = "1.5vh";
-            allPlayersList[pID].uiObj.innerText = ""+namepla;
-            allPlayersList[pID].uiObj.style.textAlign = "center";
-            allPlayersList[pID].uiObj.style.color = "#78d85d";
-            allPlayersList[pID].uiObj.style.backgroundColor = "rgba(0, 0, 0, 0.418)";
-            allPlayersList[pID].uiObj.style.padding = "5px";*/
-            document.getElementById('audui').appendChild(allPlayersList[pID].uiObj);
-
+            $("#audui").html($("#audui").html() + `
+            <div id="voiceui_${pID}" class="item">
+                <img id="voiceuiimg_${pID}" src="sound.png" alt="">
+                <p>${pName}</p>
+            </div>
+            `);
+            allPlayersList[pID].uiObj = document.getElementById(`voiceui_${pID}`);
             $("#voiceui_"+pID).hide();
             var vid = document.getElementById("voicer_"+pID);
-            vid.volume = useLocalDate.pVolume;  
+            vid.volume = 0.0;  
             IvContPeer.LuaConverted.SendLuaData('PlayerConnectedToVoice', { pId: pID });
-            IvContPeer.SetConsole(`AudioStream to ${allPlayersList[pID].pName} [${pID}] created! Start Voice!`, false);
+            IvContPeer.DebugLog(`AUDIOSTREAM CREATED! pName: ${allPlayersList[pID].pName} pID: ${pID}`);
         });
     });
 }
 
 window.addEventListener('message', function(event)
 {
-
     switch(event.data.pack) {
         case IvContPeer.LuaConverted.START: {
             useLocalDate.settings = event.data.settings;
@@ -189,8 +197,8 @@ window.addEventListener('message', function(event)
             var args = event.data.args;
             switch(event.data.func) {
                 case IvContPeer.LuaConverted.SET_PLAYER_CHANNEL: {
+                    IvContPeer.DebugLog(`CHANGE CHANNEL FROM ${useLocalDate.pChannel} TO ${args[0]}`);
                     useLocalDate.pChannel = args[0];
-                    IvContPeer.SetConsole(`Change pChannel to ${useLocalDate.pChannel}`, false);
                     break;
                 }
                 case IvContPeer.LuaConverted.IS_PLAYER_CONNECTED: {
@@ -208,7 +216,9 @@ window.addEventListener('message', function(event)
                     break;
                 }
                 case IvContPeer.LuaConverted.BAN_MICROPHONE: {
-                    
+                    localMuted = args[0]
+                    IvContPeer.DebugLog(`CHANGE MICROPHONE MUTE STATUS: ${localMuted}`);
+                    IvContPeer.SetClientStatus(-1);
                     break;
                 }
                 case IvContPeer.LuaConverted.PLAYER_IS_TALKING: {
@@ -235,9 +245,9 @@ window.addEventListener('message', function(event)
                     break;
                 }
                 case IvContPeer.LuaConverted.SET_PLAYER_VOLUME: {
-                    IvContPeer.SetConsole(`Change volume from ${useLocalDate.pVolume} to ${args[1]}`, false);
                     if(args[0] == -1)
                     {
+                        //IvContPeer.DebugLog(`CHANGE VOLUME (ALL PEERS) volume: ${args[1]}`);
                         useLocalDate.pVolume = args[1];
                         for(var i = 0; i < 32; i++)
                         {
@@ -249,6 +259,7 @@ window.addEventListener('message', function(event)
                     }
                     else
                     {
+                        //IvContPeer.DebugLog(`CHANGE VOLUME (pId: ${args[0]}) volume: ${args[1]}`);
                         if(allPlayersList[args[0]].audioObj)
                         {
                             allPlayersList[args[0]].audioObj.volume = args[1];
@@ -265,7 +276,10 @@ window.addEventListener('message', function(event)
                 {
 					useLocalDate.pVolume = event.data.vol;
                     allPlayersList[event.data.pId].audioObj.play();
-                    $("#voiceui_"+event.data.pId).show();
+                    $("#voiceuiimg_"+event.data.pId).attr("src","sound.png");
+                    if(useLocalDate["settings"].panelVoiceVisible) {
+                        $("#voiceui_"+event.data.pId).show();
+                    }
                 }
                 
 
@@ -280,27 +294,28 @@ window.addEventListener('message', function(event)
         }
         case IvContPeer.LuaConverted.CHANGEVOICER: {
 
-            if(useLocalDate.pChannel == allPlayersList[event.data.pId].pChannel) {
-                if(event.data.set == 1) {
-                    if(allPlayersList[event.data.pId].audioObj)
-                    {
-                        allPlayersList[event.data.pId].audioObj.play();
+            if(event.data.set == 1) {
+                if(allPlayersList[event.data.pId].audioObj)
+                {
+                    allPlayersList[event.data.pId].audioObj.play();
+                    $("#voiceuiimg_"+event.data.pId).attr("src","soundr.png");
+                    if(useLocalDate["settings"].panelVoiceVisible) {
                         $("#voiceui_"+event.data.pId).show();
                     }
-                    
-    
-                } else if(event.data.set == 0) { 
-                    if(allPlayersList[event.data.pId].audioObj)
-                    {
-                        allPlayersList[event.data.pId].audioObj.pause();
-                        $("#voiceui_"+event.data.pId).hide();
-                    }
+                }
+                
+
+            } else if(event.data.set == 0) { 
+                if(allPlayersList[event.data.pId].audioObj)
+                {
+                    allPlayersList[event.data.pId].audioObj.pause();
+                    $("#voiceui_"+event.data.pId).hide();
                 }
             }
             break;
         }
         case IvContPeer.LuaConverted.VOICE: {
-            IvContPeer.DebugLog("CHANGE TO SET " + event.data.set + " " + useLocalDate.pStatus);
+            IvContPeer.DebugLog("SET VOICECHAT (L) BTN: " + event.data.set + " STATUS: " + useLocalDate.pStatus);
             if(event.data.set == 1 && useLocalDate.pStatus == IvContPeer.READY) {
                 IvContPeer.SetClientStatus(IvContPeer.BTNCLICK);
             } else if(event.data.set == 0 && useLocalDate.pStatus == IvContPeer.BTNCLICK) { 
@@ -309,6 +324,7 @@ window.addEventListener('message', function(event)
             break;
         }
         case IvContPeer.LuaConverted.VOICER: {
+            IvContPeer.DebugLog("SET VOICECHAT (R) BTN: " + event.data.set + " STATUS: " + useLocalDate.pStatus);
             if(event.data.set == 1 && useLocalDate.pStatus == IvContPeer.READY) {
                 IvContPeer.SetClientStatus(IvContPeer.RADIOBTNCLICK);
             }
@@ -318,14 +334,15 @@ window.addEventListener('message', function(event)
             break;
         }
         case IvContPeer.LuaConverted.CONNECT: {
-            IvContPeer.SetConsole(`PEER CONNECT pID: ${event.data.pId} pName: ${event.data.pName}`, false);
+            IvContPeer.DebugLog(`CONNECTING TO PEER pID: ${event.data.pId} pName: ${event.data.pName}`);
             ConnectToPlayer(event.data.pId, event.data.pName);
             break;
         }
         case IvContPeer.LuaConverted.DISCONNECT: {
-            IvContPeer.DebugLog("DISCONNECT LOG! " + event.data.pId);
+            IvContPeer.DebugLog("PEER DISCONNECTED pId: " + event.data.pId);
             if(allPlayersList[event.data.pId].audioObj)
             {
+                //$("#voiceui_"+event.data.pId).remove();
                 allPlayersList[event.data.pId].audioObj.remove();
                 if(allPlayersList[event.data.pId].uiObj)
                 {
