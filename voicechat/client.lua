@@ -298,15 +298,6 @@ Citizen.CreateThread(function()
     local keyradio = 0 
     while getSettings.enabledVoiceChat do
         Citizen.Wait(1)
-
-        if IsGameKeyboardKeyJustPressed(24) then
-            if PlayerHasBanMicrophone() then
-                BanMicrophone(false)
-            else
-                BanMicrophone(true)
-            end
-        end
-
         if useLocalData.BanMicrophone == false then
             
 
