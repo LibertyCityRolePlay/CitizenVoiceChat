@@ -54,7 +54,7 @@ Example:
 
 Example:
 ```lua
-  local playerBan = export.voicechat:PlayerHasBan()
+  local playerBan = export.voicechat:PlayerHasBanMicrophone()
  ```
  
  ---
@@ -94,25 +94,25 @@ Example:
   > nil
   
   *Return:*
-  > channelID (-1, maxChannel) - Radio channel code.
+  > channelID (0, maxChannel) - Radio channel code.
 
 Example:
 ```lua
-  local playerChannel = export.voicechat:GetPlayerChannel(-1)
+  local playerChannel = export.voicechat:GetPlayerChannel()
  ```
  
 ---
- PlayerIsTalking (playerID)
+ PlayerIsTalking ()
  
   *Arguments:*
-  > playerID (-1 - 31) - The identifier of the player. Use -1 for local player
+  > nil
   
   *Return:*
-  > resultID (0 - 2) - Returns 0 if the player is not talking, 1 if talking through the local chat, 2 - of talking through the walkie-talkie
+  > status - true or false
 
 Example:
 ```lua
-  local playerTalking = export.voicechat:PlayerIsTalking(-1)
+  local playerTalking = export.voicechat:PlayerIsTalking()
 ```
 
 ---
